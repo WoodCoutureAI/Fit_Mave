@@ -1,4 +1,3 @@
-import os
 import re
 import spacy
 import pandas as pd
@@ -15,18 +14,13 @@ nlp = spacy.load("en_core_web_sm")
 # Streamlit App Title
 st.title("📂 Fit Mave")
 
-st.write("""
-🔍 Upload a **job description** and multiple **resumes** to find the best matches based on experience and similarity scores.
-""")
+st.write("🔍 Upload a **job description** and multiple **resumes** to find the best matches based on similarity scores.")
 
 # Upload job description
 job_desc_file = st.file_uploader("📜 Upload Job Description (PDF, DOCX, TXT)", type=["pdf", "docx", "txt"])
 
 # Upload multiple resumes
 resume_files = st.file_uploader("📄 Upload Resumes (PDF, DOCX, TXT)", type=["pdf", "docx", "txt"], accept_multiple_files=True)
-
-# Input minimum years of experience required
-min_experience = st.number_input("🎓 Minimum Years of Experience Required", min_value=0, max_value=50, value=2)
 
 def extract_text_from_file(uploaded_file):
     """Extract text from PDF, DOCX, or TXT files with error handling."""
@@ -55,19 +49,6 @@ def preprocess_text(text):
     """Preprocess text using spaCy."""
     doc = nlp(text.lower())
     return " ".join(token.lemma_ for token in doc if token.is_alpha and not token.is_stop)
-
-def extract_experience(text):
-    """Extract years of experience using regex."""
-    patterns = [
-        r'(\d+)\+?\s*years?[\s\w]*experience',
-        r'experience\s*:\s*(\d+)',
-        r'(\d+)\s*years?[\w\s]*exp\b'
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            return int(match.group(1))
-    return 0
 
 def calculate_similarity(job_desc, resumes):
     """Calculate cosine similarity using TF-IDF."""
@@ -100,46 +81,34 @@ if st.button("🚀 Analyze Resumes"):
 
                     resumes[resume_file.name] = {
                         "raw_text": text,
-                        "processed_text": preprocess_text(text),
-                        "experience": extract_experience(text)
+                        "processed_text": preprocess_text(text)
                     }
 
                 if not resumes:
                     st.warning("⚠️ No valid resumes processed.")
                 else:
-                    # Filter resumes based on experience
-                    filtered_resumes = {
-                        name: data for name, data in resumes.items()
-                        if data["experience"] >= min_experience
-                    }
+                    # Compute similarity scores
+                    resume_texts = [data["processed_text"] for data in resumes.values()]
+                    scores = calculate_similarity(job_text_processed, resume_texts)
 
-                    if not filtered_resumes:
-                        st.warning("⚠️ No candidates meet the experience requirement.")
-                    else:
-                        # Compute similarity scores
-                        resume_texts = [data["processed_text"] for data in filtered_resumes.values()]
-                        scores = calculate_similarity(job_text_processed, resume_texts)
+                    # Convert results to a DataFrame
+                    results_df = pd.DataFrame([
+                        {
+                            "Resume": name,
+                            "Match Score": round(score, 2),
+                            "Status": "✅ Recommended" if score >= 0.25 else "❌ Rejected"
+                        }
+                        for (name, data), score in zip(resumes.items(), scores)
+                    ]).sort_values(by="Match Score", ascending=False)
 
-                        # Convert results to a DataFrame
-                        results_df = pd.DataFrame([
-                            {
-                                "Resume": name,
-                                "Experience (Years)": data["experience"],
-                                "Match Score": round(score, 2),
-                                "Status": "✅ Recommended" if score >= 0.25 else "❌ Rejected"
-                            }
-                            for (name, data), score in zip(filtered_resumes.items(), scores)
-                        ]).sort_values(by="Match Score", ascending=False)
+                    # Display Results
+                    st.subheader("📊 Resume Matching Results")
+                    st.dataframe(results_df)
 
-                        # Display Results
-                        st.subheader("📊 Resume Matching Results")
-                        st.dataframe(results_df)
-
-                        # Skipped Files Report
-                        if skipped_files:
-                            st.subheader("⚠️ Skipped Files")
-                            for file, reason in skipped_files:
-                                st.write(f"❌ `{file}` - {reason}")
+                    # Skipped Files Report
+                    if skipped_files:
+                        st.subheader("⚠️ Skipped Files")
+                        for file, reason in skipped_files:
+                            st.write(f"❌ `{file}` - {reason}")
 
 st.sidebar.markdown("👨‍💻 **Developed by Awaiz Kazi**")
- 

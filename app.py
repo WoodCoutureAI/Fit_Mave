@@ -8,8 +8,11 @@ from pdfminer.high_level import extract_text
 from docx import Document
 from pathlib import Path
 
-# Load spaCy model
-nlp = spacy.load("en_core_web_sm")
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
+    nlp = spacy.load("en_core_web_sm")
 
 # Streamlit App Title
 st.title("📂 Fit Mave")

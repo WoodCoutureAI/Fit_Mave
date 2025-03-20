@@ -8,6 +8,7 @@ from pdfminer.high_level import extract_text
 from docx import Document
 from pathlib import Path
 import subprocess
+import sys
 
 try:
     nlp = spacy.load("en_core_web_sm")

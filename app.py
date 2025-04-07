@@ -116,4 +116,4 @@ if st.button("🚀 Analyze Resumes"):
                         for file, reason in skipped_files:
                             st.write(f"❌ `{file}` - {reason}")
 
-st.sidebar.markdown("👨‍💻 **Developed by Awaiz Kazi**")
+st.sidebar.markdown("👨‍💻 **Developed by AI Team**")

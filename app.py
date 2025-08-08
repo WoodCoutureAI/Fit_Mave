@@ -101,7 +101,7 @@ if st.button("🚀 Analyze Resumes"):
                         {
                             "Resume": name,
                             "Match Score": round(score, 2),
-                            "Status": "✅ Recommended" if score >= 0.25 else "❌ Rejected"
+                            "Status": "✅ Recommended" if score >= 0.35 else "❌ Rejected"
                         }
                         for (name, data), score in zip(resumes.items(), scores)
                     ]).sort_values(by="Match Score", ascending=False)
@@ -117,3 +117,4 @@ if st.button("🚀 Analyze Resumes"):
                             st.write(f"❌ `{file}` - {reason}")
 
 st.sidebar.markdown("👨‍💻 **Developed by AI Team**")
+
